@@ -22,7 +22,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	static var debugMode:Boolean = false;
 	
 	// Version
-	static var version:String = "0.6";
+	static var version:String = "0.7";
 	
 	// Signals
 	static var SubtitleSignal:Signal;
@@ -106,6 +106,8 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		// move clip to location
 		SetPosition(Config.GetValue("position") );
 		
+		// Empty SurvivorList (in case we left a scenario early)
+		EmptySurvivorList();
 		
 		// connect vicinity system signal
 		VicinitySystem.SignalDynelEnterVicinity.Connect(DetectSurvivors, this);
@@ -180,6 +182,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	}
 	
 	private function ClearWarning() {
+		Debug("ClearWarning");
 		SetVisible(m_WarningText, false);
 	}
 	
@@ -294,7 +297,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 			DisplayPossessWarning();
 		}
 		// fully possessed 18642
-		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18639)) > 0 ) {
+		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18642)) > 0 ) {
 			Debug("Fully Possessed");
 			ClearWarning();
 		}
@@ -312,6 +315,11 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18615)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18619)) > 0 ) {
 			ClearWarning();
 			setTimeout(Delegate.create(this, EmptySurvivorList), 8000);
+		}
+		// Boss Spawn - shut off any indicators after 20s (bombs last 25s)
+		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18623)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18624)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18625)) > 0 ) {
+			Debug("Boss Spawned");
+			setTimeout(Delegate.create(this, ClearWarning), 20000 );
 		}
 		// testing
 		//else if ( debugMode && ( text.indexOf("i") > 0 ) ) {
@@ -332,18 +340,30 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	private function OnSurvivorBuffRemoved(buffId:Number) {
 		Debug("Buff removed: " + buffId + " " + LDBFormat.LDBGetText( 50210, buffId) );
 		
-		// Possession has two ids: 9264872 and 9264873. 
-		switch ( buffId ) {
-			case 9264872: // both of these appear to drop off when possession is cleared
-			case 9264873: //
-			case 9264874: // These two don't appear to be used, but we'll include them for good measure
-			case 9264875: //
-				ClearWarning();
-				break;
+		// Survivor loses the "Exorcised" buff (9264887) when possession is removed
+		if ( buffId == 9264887 ) {
+			ClearWarning();
 		}
+		
+		// Possession has four ids: 9264872, 9264873, 9264874, 9264875. Use of these is confusing. 
+		// Usually 72/72 drop off when exorcised, but sometimes it's 72/24. 
+		// It looks like they drop off one at a time over the duration of a possession (one exmapple: lost 73, then exorcism removed 72/74).
+		// Have only seen 75 fall off when fully possessed. 
 		// Also seen is 9264888, which seems to be removed a long time after someone gets possessed
 		// (maybe a lockout timer, or related to letting it go to full term)
+		// Probably best to avoid all of these in favor of the Exorcised buff.
+		
+		//switch ( buffId ) {
+			//case 9264872: // both of these appear to drop off when possession is cleared
+			//case 9264873: //
+			//case 9264874: // These two don't appear to be used, but we'll include them for good measure
+			//case 9264875: //
+				//ClearWarning();
+				//break;
+		//}
 	}
+
+		
 	
 	private function EmptySurvivorList() {
 		// delete entire list
