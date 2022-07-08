@@ -7,6 +7,7 @@ import com.Utils.Archive;
 import com.GameInterface.Game.Character;
 import com.Utils.ID32;
 import com.Utils.LDBFormat;
+import com.Utils.SignalGroup;
 import com.Utils.Text;
 import com.Utils.GlobalSignal;
 import com.Utils.Signal;
@@ -19,10 +20,10 @@ import com.theck.Utils.Common;
 
 class com.theck.BombsDontScareMe.BombsDontScareMe 
 {
-	static var debugMode:Boolean = true;
+	static var debugMode:Boolean = false;
 	
 	// Version
-	static var version:String = "0.3";
+	static var version:String = "0.5";
 	
 	// Signals
 	static var SubtitleSignal:Signal;
@@ -40,6 +41,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	private var Config:ConfigManager;
 	
 	// NPC storage
+	//private var survivors:SignalGroup;
 	private var SurvivorList:Object;
 	
 	
@@ -287,12 +289,18 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	
 	private function CheckSubtitleTextForWarnings(text:String) {
 		
+		//Debug(text);
+		
+		//// Begin scenario, create signal group for survivors - message 18597 
+		//if ( text.indexOf(LDBFormat.LDBGetText(50000, 18597)) > 0 ) {
+			//CreateSignalGroup();
+		//}		
 		//Possession: 18639, 18640, 18641
 		if ( text.indexOf(LDBFormat.LDBGetText(50000, 18639)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18640)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18641)) > 0 ) {  
 			DisplayPossessWarning();
 		}
 		// fully possessed 18642
-		else if ( text == LDBFormat.LDBGetText(50000, 18639) ) {
+		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18639)) > 0 ) {
 			Debug("Fully Possessed");
 			ClearWarning();
 		}
@@ -302,14 +310,14 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 			DisplayBombWarning();
 		}
 		// injured 18645; detonated 18646
-		else if ( text == LDBFormat.LDBGetText(50000, 18645) || text == LDBFormat.LDBGetText(50000, 18646) ) {
+		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18645)) > 0  || text.indexOf(LDBFormat.LDBGetText(50000, 18646)) > 0  ) {
 			Debug("Explosive Detonated");		
 			ClearWarning();
 		}
 		// Scenario completed: 18615 for success, 18619 for failure
-		else if ( text == LDBFormat.LDBGetText(50000, 18615) || text == LDBFormat.LDBGetText(50000, 18619) ) {
+		else if ( text.indexOf(LDBFormat.LDBGetText(50000, 18615)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18619)) > 0 ) {
 			ClearWarning();
-			EmptySurvivorList();
+			setTimeout(Delegate.create(this, EmptySurvivorList), 8000);
 		}
 		// testing
 		//else if ( debugMode && ( text.indexOf("i") > 0 ) ) {
@@ -318,14 +326,14 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		//}
 	}
 	
-	private function AddSurvivorToList(dynelId:ID32) {
-		if ( !SurvivorList[dynelId] ) {
-			var char:Character = Character.GetCharacter(dynelId);
-			SurvivorList[dynelId] = char;
-			SurvivorList[dynelId].SignalBuffRemoved.Connect(OnSurvivorBuffRemoved, this);
-			//SurvivorList[dynelId].SignalCharacterDestructed.Connect(OnSurvivorDeleted, this);
-			//SurvivorList[dynelId].SignalCharacterDied.Connect(OnSurvivorDeleted, this);
-			Debug("Survivor added: " + dynelId);
+	private function AddSurvivorToList(id:ID32) {
+		if ( !SurvivorList[id] ) {
+			var char:Character = Character.GetCharacter(id);
+			SurvivorList[id] = char;
+			SurvivorList[id].SignalBuffRemoved.Connect(OnSurvivorBuffRemoved, this);
+			//SurvivorList[id].SignalCharacterDestructed.Connect(OnSurvivorDeleted, this);
+			//SurvivorList[id].SignalCharacterDied.Connect(OnSurvivorDeleted, this);
+			Debug("Survivor added: " + id + ", total: " + CountObjectEntries(SurvivorList) );
 		}
 	}
 	
@@ -347,10 +355,46 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	
 	private function EmptySurvivorList() {
 		// delete entire list
+		Debug("Deleting survivor list. Before delete, length is " + CountObjectEntries(SurvivorList) );
 		for ( var i in SurvivorList ) {
 			delete SurvivorList[i];
 		}
+		Debug("Deleting survivor list. After delete, length is " + CountObjectEntries(SurvivorList) );
 	}
+	
+	private function CountObjectEntries(obj:Object):Number {
+		var count:Number = 0;
+		for (var o in obj)
+		{
+			count++;
+		}
+		return count;
+	}
+	
+	//// New implementation
+	//private function CreateSignalGroup()
+    //{
+        //survivors = new SignalGroup();
+		//Debug("survivors created");
+    //}
+//
+    //private function AddSurvivor(id:ID32)
+    //{
+		//if ( !survivors ) {
+			//CreateSignalGroup();
+		//}
+        //var char:Character = Character.GetCharacter(id);
+        //if ( !char.SignalBuffRemoved.IsSlotConnected(OnSurvivorBuffRemoved, this) ) {
+            //char.SignalBuffRemoved.Connect(survivors, OnSurvivorBuffRemoved, this);
+			//Debug("Survivor added: " + char.GetID());
+        //}
+    //}
+    //
+    //private function EndScenario()
+    //{
+        //survivors.DisconnectAll();
+		//Debug("survivors disconnected");
+    //}
 	
 	//////////////////////////////////////////////////////////
 	// Signal Handling
@@ -388,12 +432,12 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		}
 	}
 	
-	private function DetectSurvivors(dynelId:ID32):Void {
-		var dynel:Dynel = Dynel.GetDynel(dynelId);
+	private function DetectSurvivors(id:ID32):Void {
+		var dynel:Dynel = Dynel.GetDynel(id);
 		var dynel112:Number = dynel.GetStat(112);
 		
 		// bail if this isn't a character
-		if dynelId.GetType() != 50000 {return; }
+		if id.GetType() != 50000 {return; }
 		
 		// these are e17 ids, not sure about other difficulties
 		switch ( dynel112 ) {
@@ -408,13 +452,13 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 			case 33438: // ???
 			
 			// add to list and monitor
-				AddSurvivorToList(dynelId);
+				AddSurvivorToList(id);
 				break;
 			
 			default:
 				break;
 		}
-		//Debug("Dynel Id: " + dynelId + ", GetName(): " + dynel.GetName() + ", GetType(): " + dynelId.GetType() + ", Stat 112: " + dynel.GetStat(112));
+		//Debug("Dynel Id: " + id + ", GetName(): " + dynel.GetName() + ", GetType(): " + id.GetType() + ", Stat 112: " + dynel.GetStat(112));
 		
 
 	}
