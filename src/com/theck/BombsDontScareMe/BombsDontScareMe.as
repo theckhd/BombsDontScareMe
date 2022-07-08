@@ -7,7 +7,6 @@ import com.Utils.Archive;
 import com.GameInterface.Game.Character;
 import com.Utils.ID32;
 import com.Utils.LDBFormat;
-import com.Utils.SignalGroup;
 import com.Utils.Text;
 import com.Utils.GlobalSignal;
 import com.Utils.Signal;
@@ -23,7 +22,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	static var debugMode:Boolean = false;
 	
 	// Version
-	static var version:String = "0.5";
+	static var version:String = "0.6";
 	
 	// Signals
 	static var SubtitleSignal:Signal;
@@ -41,7 +40,6 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	private var Config:ConfigManager;
 	
 	// NPC storage
-	//private var survivors:SignalGroup;
 	private var SurvivorList:Object;
 	
 	
@@ -291,10 +289,6 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		
 		//Debug(text);
 		
-		//// Begin scenario, create signal group for survivors - message 18597 
-		//if ( text.indexOf(LDBFormat.LDBGetText(50000, 18597)) > 0 ) {
-			//CreateSignalGroup();
-		//}		
 		//Possession: 18639, 18640, 18641
 		if ( text.indexOf(LDBFormat.LDBGetText(50000, 18639)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18640)) > 0 || text.indexOf(LDBFormat.LDBGetText(50000, 18641)) > 0 ) {  
 			DisplayPossessWarning();
@@ -331,8 +325,6 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 			var char:Character = Character.GetCharacter(id);
 			SurvivorList[id] = char;
 			SurvivorList[id].SignalBuffRemoved.Connect(OnSurvivorBuffRemoved, this);
-			//SurvivorList[id].SignalCharacterDestructed.Connect(OnSurvivorDeleted, this);
-			//SurvivorList[id].SignalCharacterDied.Connect(OnSurvivorDeleted, this);
 			Debug("Survivor added: " + id + ", total: " + CountObjectEntries(SurvivorList) );
 		}
 	}
@@ -371,31 +363,6 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		return count;
 	}
 	
-	//// New implementation
-	//private function CreateSignalGroup()
-    //{
-        //survivors = new SignalGroup();
-		//Debug("survivors created");
-    //}
-//
-    //private function AddSurvivor(id:ID32)
-    //{
-		//if ( !survivors ) {
-			//CreateSignalGroup();
-		//}
-        //var char:Character = Character.GetCharacter(id);
-        //if ( !char.SignalBuffRemoved.IsSlotConnected(OnSurvivorBuffRemoved, this) ) {
-            //char.SignalBuffRemoved.Connect(survivors, OnSurvivorBuffRemoved, this);
-			//Debug("Survivor added: " + char.GetID());
-        //}
-    //}
-    //
-    //private function EndScenario()
-    //{
-        //survivors.DisconnectAll();
-		//Debug("survivors disconnected");
-    //}
-	
 	//////////////////////////////////////////////////////////
 	// Signal Handling
 	//////////////////////////////////////////////////////////
@@ -408,6 +375,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		CheckSubtitleTextForWarnings(text);
     }
     
+	// This hooks the subtitle function. This one is all Fox's fault.
     private function Hook2DText(){
         if (!_global.com.theck.BombsDontScareMe.SubtitleHook)
         {
