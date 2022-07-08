@@ -355,7 +355,7 @@ class com.theck.BombsDontScareMe.ConfigManager
 	//////////////////////////////////////////////////////////
 	
 	private function Debug(text:String) {
-		if debugMode { com.GameInterface.UtilsBase.PrintChatText("RF.CM:" + text ); }
+		if debugMode { com.GameInterface.UtilsBase.PrintChatText("BDSM.CM:" + text ); }
 	}
 	
 }

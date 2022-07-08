@@ -306,6 +306,11 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 			Debug("Explosive Detonated");		
 			ClearWarning();
 		}
+		// Scenario completed: 18615 for success, 18619 for failure
+		else if ( text == LDBFormat.LDBGetText(50000, 18615) || text == LDBFormat.LDBGetText(50000, 18619) ) {
+			ClearWarning();
+			EmptySurvivorList();
+		}
 		// testing
 		//else if ( debugMode && ( text.indexOf("i") > 0 ) ) {
 			//Debug("Testing");
@@ -318,7 +323,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 			var char:Character = Character.GetCharacter(dynelId);
 			SurvivorList[dynelId] = char;
 			SurvivorList[dynelId].SignalBuffRemoved.Connect(OnSurvivorBuffRemoved, this);
-			SurvivorList[dynelId].SignalCharacterDestructed.Connect(OnSurvivorDeleted, this);
+			//SurvivorList[dynelId].SignalCharacterDestructed.Connect(OnSurvivorDeleted, this);
 			//SurvivorList[dynelId].SignalCharacterDied.Connect(OnSurvivorDeleted, this);
 			Debug("Survivor added: " + dynelId);
 		}
@@ -340,9 +345,11 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		// (maybe a lockout timer, or related to letting it go to full term)
 	}
 	
-	private function OnSurvivorDeleted(dynelId:ID32) {
-		Debug("OSD arg: " + dynelId);
-		SurvivorList[dynelId] = undefined;
+	private function EmptySurvivorList() {
+		// delete entire list
+		for ( var i in SurvivorList ) {
+			delete SurvivorList[i];
+		}
 	}
 	
 	//////////////////////////////////////////////////////////
@@ -416,7 +423,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	//////////////////////////////////////////////////////////
 	
 	private function Debug(text:String) {
-		if debugMode { com.GameInterface.UtilsBase.PrintChatText("BS:" + text ); }
+		if debugMode { com.GameInterface.UtilsBase.PrintChatText("BDSM:" + text ); }
 	}
 	
 }
