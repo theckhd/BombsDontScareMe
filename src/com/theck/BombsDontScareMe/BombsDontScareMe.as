@@ -22,7 +22,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	static var debugMode:Boolean = false;
 	
 	// Version
-	static var version:String = "0.7";
+	static var version:String = "0.8";
 	
 	// Signals
 	static var SubtitleSignal:Signal;
@@ -41,6 +41,11 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	
 	// NPC storage
 	private var SurvivorList:Object;
+	
+	// timer
+	private var updateInterval:Number; // interval variable for updating during combat
+	static var POLLING_INTERVAL:Number = 100; // ms update interval
+	private var warningStartTime:Number;
 	
 	
 	//////////////////////////////////////////////////////////
@@ -184,6 +189,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	private function ClearWarning() {
 		Debug("ClearWarning");
 		SetVisible(m_WarningText, false);
+		clearInterval(updateInterval);
 	}
 	
 	private function SetPosition(pos:Point) {
@@ -276,9 +282,13 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	}
 	
 	private function DisplayBombWarning() {
-		SetText(m_WarningText, "Explosive");
+		SetText(m_WarningText, "Explosive 31s");
 		SetTextColor(COLOR_EXPLOSION);
-		SetVisible(m_WarningText, true);	
+		SetVisible(m_WarningText, true);
+		
+		// start periodic updates
+		warningStartTime = getTimer();
+		updateInterval = setInterval(Delegate.create(this, UpdateBombDisplay), POLLING_INTERVAL);	
 	}
 	
 	private function DisplayTestWarning(text:String) {
@@ -286,6 +296,25 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		SetTextColor(COLOR_EXPLOSION);
 		SetVisible(m_WarningText, true);
 		setTimeout(Delegate.create(this, ClearWarning), 2000 );
+	}
+	
+	private function UpdateBombDisplay() {
+		// remaining time (needed for bar pct)
+		var timeRemaining:Number = warningStartTime + 31000 - getTimer();
+		
+		// display time
+		SetText(m_WarningText, "Explosive " + FormatTimeText(timeRemaining) );
+	}
+	
+	private function FormatTimeText(time:Number):String {
+		
+		var outputText:String;
+		var secs = Math.max(Math.floor( ( time / 1000 ) ), 0);
+		
+		outputText = secs.toString();
+		
+		outputText = outputText + "s";
+		return outputText;
 	}
 	
 	private function CheckSubtitleTextForWarnings(text:String) {
