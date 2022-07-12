@@ -22,7 +22,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	static var debugMode:Boolean = false;
 	
 	// Version
-	static var version:String = "0.8";
+	static var version:String = "0.9";
 	
 	// Signals
 	static var SubtitleSignal:Signal;
@@ -35,6 +35,7 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	private var guiEditThrottle:Boolean = true;
 	static var COLOR_EXPLOSION:Number = 0xFF0000;
 	static var COLOR_POSSESSION:Number = 0x9300FF;
+	private var announceversion:Boolean;
 	
 	// Config
 	private var Config:ConfigManager;
@@ -52,13 +53,21 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	// Constructor and Mod Management
 	//////////////////////////////////////////////////////////
 	
+	//private static var ModInfo:Object = {
+		//// Debug setting at top so that commenting out leaves no hanging ','
+		//// Debug : true,
+		//Name : "BombsDontScareMe",
+		//Version : "0.9"
+	//};
 	
 	public function BombsDontScareMe(swfRoot:MovieClip){
+		//super(ModInfo, swfRoot);
 		
         m_swfRoot = swfRoot;
 		
 		Config = new ConfigManager();
 		Config.NewSetting("fontsize", 50, "");
+		Config.NewSetting("quiet", false, "");
 		
 		clip = m_swfRoot.createEmptyMovieClip("BombsDontScareMe", m_swfRoot.getNextHighestDepth());
 		
@@ -73,7 +82,6 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 	}
 
 	public function Load(){
-		com.GameInterface.UtilsBase.PrintChatText("BombsDontScareMe v" + version + " Loaded");
 		
 		// TODO: maybe move signal connections to another function and connect/disconnect based on zone? 7602/7612/7622 are scenarios
 		
@@ -87,6 +95,9 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		
 		// first GUIEdit call to fix locations
 		GUIEdit(false);
+		
+		// set version announce to true
+		announceversion = true;
 	}
 
 	public function Unload(){
@@ -101,6 +112,11 @@ class com.theck.BombsDontScareMe.BombsDontScareMe
 		//Debug("Activate()")
 		
 		Config.LoadConfig(config);
+		
+		if ( announceversion && ( ! Config.GetValue("quiet",false) ) ) {
+			com.GameInterface.UtilsBase.PrintChatText("BombsDontScareMe v" + version + " Loaded");
+			announceversion = false;
+		}
 		
 		// Create text field and fix visibility
 		if ( !m_WarningText ) {
